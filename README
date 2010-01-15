@@ -1,0 +1,5 @@
+Graph algorithms for common lisp
+
+Features
+- Adjacency lists
+- Nodes and edges are first class, and each has an id as well as arbitrary other data stored as an alist of key-value pairs
