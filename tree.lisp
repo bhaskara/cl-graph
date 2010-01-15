@@ -44,7 +44,6 @@ Takes O(ev^2) time"
       ((null incoming) (error "~a has no parent" n))
       (t (from (edge-info g (first incoming)))))))
 
-(defun children (
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -56,3 +55,28 @@ Takes O(ev^2) time"
   (let ((i (add-node g :data data)))
     (values i (add-edge g n i :data edge-data))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Root
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun is-root (g n)
+  (let ((l (incoming-edges g n)))
+    (length-equals 1 l)))
+
+(defun root (g)
+  (check-not-null
+   (find-if (partial is-root g) (node-list g))))
+
+(defun path-from-root (g n)
+  (labels ((helper (g n l)
+	     (if (is-root g n)
+		 (cons n l)
+		 (helper g (parent n) (cons n l)))))
+    (helper g n nil)))
+
+(defun depth (g n)
+  (labels ((helper (g n d)
+	     (if (is-root g n)
+		 d
+		 (helper g (parent n) (1+ d)))))
+    (helper g n 0)))

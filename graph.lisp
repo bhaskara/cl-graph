@@ -127,7 +127,6 @@
 
 (defun add-node (g &key data id)
   "Add a node.  You can provide your own ID, so long as it's not an integer (those are reserved for the defaults)."
-  (declare (type (not number) id))
   (orf id (1- (incf (next-node-id g))))
   (with-readers (nodes) g
     (assert (not (hash-table-has-key nodes id)))
@@ -137,7 +136,6 @@
 
 (defun add-edge (g from to &key id data)
   "Add an edge between two nodes.  You can provide your own ID, so long as its not an integer (those are reserved for the defaults)."
-  (declare (type (not number) id))
   (orf id (1- (incf (next-edge-id g))))
   (with-readers (edges) g
     (assert (not (hash-table-has-key edges id)))
