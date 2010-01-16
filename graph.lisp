@@ -61,10 +61,10 @@
 (defun get-node-data (g i)
   (node-data (node-info g i)))
 
-(defun lookup-edge-data (g i k)
+(defun lookup-edge-data (g k i)
   (lookup-alist k (get-edge-data g i)))
 
-(defun lookup-node-data (g i k)
+(defun lookup-node-data (g k i)
   (lookup-alist k (get-node-data g i)))
 
 (defun node-list (g)
@@ -79,6 +79,12 @@
      (let ((data (node-data (node-info g id))))
        (when (aand (assoc key data) (equal (cdr it) val))
 	 (return id))))))
+
+(defun head (g e)
+  (to (edge-info g e)))
+
+(defun tail (g e)
+  (from (edge-info g e)))
      
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -106,19 +112,27 @@
     (when (eql j (other-node g e i))
       (return-from edge-between e))))
 
-
-
 (defun neighbors (g i)
   "Node ids of neighbors i in g, with duplicates removed"
   (let ((l nil))
     (dolist (e (adjacent-edge-list g i) l)
       (pushnew (other-node g e i) l))))
 
-(defun incoming-edges (g n)
-  (let ((l nil))
-    (dolist (e (adjacent-edge-list g n) (nreverse l))
-      (when (eql (to (edge-info g e)) n)
-	(push e l)))))
+(defun incoming-edges (g n &key (result-type 'list))
+  (edge-filter-helper
+   #'(lambda (e) (eql (to (edge-info g e)) n))
+   (adjacent-edge-list g n) result-type))
+
+(defun edge-filter-helper (f l result-type)
+  (ecase result-type
+    (list (filter f l))
+    (iterator (elements-satisfying f (iter l)))))
+
+(defun outgoing-edges (g n &key (result-type 'list))
+  (edge-filter-helper 
+   #'(lambda (e) (eql (from (edge-info g e)) n))
+   (adjacent-edge-list g n) result-type))
+   
       
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -152,6 +166,39 @@
       (setf (adjacent-edges info) (delete id (adjacent-edges info)))))
   (assert (remhash id (edges g)) nil "Attempted to delete nonexistent edge ~a" id))
 
+(defun update-node-data (g n k v)
+  (let ((i (node-info g n)))
+    (aif (assoc k (node-data i))
+	 (setf (cdr it) v)
+	 (push (cons k v) (node-data i)))
+    v))
+
+(defun update-edge-data (g e k v)
+  (let ((i (edge-info g e)))
+    (aif (assoc k (edge-data i))
+	 (setf (cdr it) v)
+	 (push (cons k v) (edge-data i)))
+    v))
+
+
+(defmacro memoize-node-data (g n k form)
+  (with-gensyms (i k2 v)
+    `(let ((,i (node-info ,g ,n)) (,k2 ,k))
+       (aif (assoc ,k2 (node-data ,i))
+	    (cdr it)
+	    (let ((,v ,form))
+	      (push (cons ,k2 ,v) (node-data ,i))
+	      ,v)))))
+
+(defmacro memoize-edge-data (g e k form)
+  (with-gensyms (i k2 v)
+    `(let ((,i (edge-info ,g ,e)) (,k2 ,k))
+       (aif (assoc ,k2 (edge-data ,i))
+	    (cdr it)
+	    (let ((,v ,form))
+	      (push (cons ,k2 ,v) (edge-data ,i))
+	      ,v)))))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -163,10 +210,12 @@
     (pprint-logical-block (str nil :prefix "[" :suffix "]")
       (format str "Graph~2I")
       (dolist (id (node-list g))
+	(pprint-pop)
 	(let ((info (node-info g id)))
 	  (format str "~:@_Node ~a~4I~:[~;~:@_Data: ~:*~a~]~:@_Edges: ~a~2I" 
 		  id (node-data info) (adjacent-edges info))))
       (dolist (id (edge-list g))
+	(pprint-pop)
 	(let ((info (edge-info g id)))
 	  (format str "~:@_Edge ~a.  ~a -> ~a.~4I~:[~;~:@_Data: ~:*~a~]~2I"
 		  id (from info) (to info) (edge-data info)))))))

@@ -3,13 +3,21 @@
   (:export
 
    :make-graph :make-undirected-graph :copy-graph 
-   :add-node :add-edge :remove-edge
    :node-list :edge-list
-   :get-edge-data :get-node-data
-   :adjacent-edge-list :neighbors :other-node :edge-between :incident-nodes
+
+   :add-node :add-edge :remove-edge
+
+   :get-edge-data :get-node-data :lookup-edge-data :lookup-node-data 
+   :update-edge-data :update-node-data :memoize-edge-data :memoize-node-data
+
+   :adjacent-edge-list :neighbors :other-node :edge-between :incident-nodes 
+   :outgoing-edges :incoming-edges :head :tail
+
+
    :compute-navfn :extract-path :shortest-path
 
    ;; Trees
-   :is-tree :parent
+   :is-tree :parent :root :depth :add-child :children :is-root :is-leaf
+   :print-local-tree :down :up :inspect-tree
 
 ))

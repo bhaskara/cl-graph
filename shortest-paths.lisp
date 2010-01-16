@@ -14,7 +14,7 @@
 	     (process-edge (n e)
 	       (let* ((n2 (other-node g e n))
 		      (node-cost (gethash n navfn))
-		      (edge-cost (lookup-edge-data g e cost-key))
+		      (edge-cost (lookup-edge-data g cost-key e))
 		      (new (e+ node-cost edge-cost)))
 		 (when (e<= new (gethash n2 navfn 'infinity))
 		   (set-cost-to-go n2 new)

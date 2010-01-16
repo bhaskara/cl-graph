@@ -13,7 +13,7 @@ Takes O(ev^2) time"
 
   (let ((root nil))
     (dolist (n (node-list g))
-      (let ((l (length (incoming-edges g n))))
+      (let ((l (length (incoming-edges g n :result-type 'list))))
 	(if (= 0 l)
 	    (if root
 		(return-from is-tree (values nil `(multiple-roots ,root ,n)))
@@ -37,13 +37,25 @@ Takes O(ev^2) time"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	       
 (defun parent (g n)
-  "Return the unique parent node of N or signal an error."
-  (let ((incoming (incoming-edges g n)))
-    (cond
-      ((rest incoming) (error "~a has multiple parent edges ~a" n incoming))
-      ((null incoming) (error "~a has no parent" n))
-      (t (from (edge-info g (first incoming)))))))
+  "Return the unique parent node of N or signal an error.  Memoizes the parent edge in the node data."
+  (tail g (parent-edge g n)))
 
+(defun parent-edge (g n)
+  "Return the unique parent edge of N or signal an error.  Memoizes result in the node data."
+  (memoize-node-data 
+   g n :parent-edge
+   (let ((incoming (incoming-edges g n :result-type 'list)))
+     (cond
+       ((rest incoming) (error "~a has multiple parent edges ~a" n incoming))
+       ((null incoming) (error "~a has no parent" n))
+       (t (first incoming))))))
+
+
+
+(defun children (g n &key (result-type 'list))
+  (map-iterator result-type
+		(compose #'to (partial #'edge-info g))
+		(outgoing-edges g n :result-type 'iterator)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -60,23 +72,67 @@ Takes O(ev^2) time"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun is-root (g n)
-  (let ((l (incoming-edges g n)))
-    (length-equals 1 l)))
+  (let ((l (incoming-edges g n :result-type 'iterator)))
+    (not (funcall l))))
+
+(defun is-leaf (g n)
+  (let ((l (outgoing-edges g n :result-type 'iterator)))
+    (not (funcall l))))
 
 (defun root (g)
   (check-not-null
-   (find-if (partial is-root g) (node-list g))))
+   (find-if (partial #'is-root g) (node-list g))))
 
 (defun path-from-root (g n)
   (labels ((helper (g n l)
 	     (if (is-root g n)
 		 (cons n l)
-		 (helper g (parent n) (cons n l)))))
+		 (helper g (parent g n) (cons n l)))))
     (helper g n nil)))
 
 (defun depth (g n)
   (labels ((helper (g n d)
 	     (if (is-root g n)
 		 d
-		 (helper g (parent n) (1+ d)))))
+		 (helper g (parent g n) (1+ d)))))
     (helper g n 0)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Debug
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar *tree*)
+(defvar *current*)
+(defvar *current-edge*)
+
+(defun inspect-tree (tree &optional (n 0))
+  (setq *tree* tree
+	*current* n)
+  (update-current-edge)
+  (print-local-tree))
+
+(defun update-current-edge ()
+  (setq *current-edge* (if (is-root *tree* *current*) nil (parent-edge *tree* *current*))))
+
+(defun up (&optional (n 1))
+  (dotimes (i n)
+    (setq *current* (parent *tree* *current*))
+    (update-current-edge))
+  (print-local-tree))
+
+(defun down (i)
+  (assert (member i (outgoing-edges *tree* *current*)))
+  (setq *current* (head *tree* i))
+  (print-local-tree))
+
+	  
+
+(defun print-local-tree ()
+  (let ((str t))
+    (pprint-logical-block (str nil :prefix "[" :suffix "]")
+      (format str "Node ~a~:@_ ~a" *current* (get-node-data *tree* *current*))
+      
+      (format str "~:[~;~:*~:@_Parent edge ~a~:@_ ~a~]" *current-edge* (when *current-edge* (get-edge-data *tree* *current-edge*)))
+      (dolist (e (outgoing-edges *tree* *current*))
+	(format str "~:@_Child edge ~a~:@_ ~a" e (get-edge-data *tree* e))))))
+      
