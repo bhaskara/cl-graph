@@ -34,7 +34,7 @@
 
 	      
 	      
-(defun extract-path (src g table)
+(defun extract-path (g table src)
   "Extract path from routing table (represented as list of edges, and list of nodes).  Error if there exists no path."
   (let ((nodes (list src)) (edges nil))
     (loop
@@ -47,5 +47,5 @@
 	 (push (other-node g next n) nodes)))))
 	     
 	 
-(defun shortest-path (src dest g &key (cost-key :length))
-  (extract-path src g (nth-value 1 (compute-navfn g dest :cost-key cost-key))))
+(defun shortest-path (g dest src &key (cost-key :length))
+  (extract-path g (nth-value 1 (compute-navfn g dest :cost-key cost-key)) src))

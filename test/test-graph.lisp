@@ -68,7 +68,7 @@
 (check-equal (hash-table-to-alist nf) 
 	     '((e . 0.0) (d . 1.6) (a . 2.4) (c . 5.6) (b . 5.4) (f . 7.4)) #'(lambda (l1 l2) (is-permutation l1 l2 :test #'close-pairs)))
 
-(mvsetq (e-path n-path) (extract-path 'c g rt))
+(mvsetq (e-path n-path) (extract-path g rt 'c))
 (check-equal e-path (list (edge-between g 'c 'a) (edge-between g 'a 'e)))
 (check-equal n-path '(c a e))
 
@@ -78,7 +78,7 @@
 (check-equal (hash-table-to-alist nf) 
 	     '((e . 0.0) (d . 1.6) (a . 2.8) (c . 5.7) (b . 5.8) (f . 7.8)) #'(lambda (l1 l2) (is-permutation l1 l2 :test #'close-pairs)))
 
-(mvsetq (e-path n-path) (extract-path 'c g rt))
+(mvsetq (e-path n-path) (extract-path g rt 'c))
 (check-equal e-path (list (edge-between g 'c 'd) (edge-between g 'd 'e)))
 (check-equal n-path '(c d e))
       
@@ -91,14 +91,14 @@
 (check-equal (hash-table-to-alist nf) 
 	     '((e . 0.0) (d . 1.6) (a . 2.8) (c . 5.7) (b . 5.8) (f . 7.8)) #'(lambda (l1 l2) (is-permutation l1 l2 :test #'close-pairs)))
 
-(mvsetq (e-path n-path) (extract-path 'c g rt))
+(mvsetq (e-path n-path) (extract-path g rt 'c))
 (check-equal e-path (list (edge-between g2 'c 'd) (edge-between g2 'd 'e)))
 (check-equal n-path '(c d e))
 
 
 ;; Remove edge
-(check-equal (nth-value 1 (shortest-path 'c 'e g2)) '(c d e))
+(check-equal (nth-value 1 (shortest-path g2 'e 'c)) '(c d e))
 (remove-edge g2 (edge-between g2 'd 'e))
-(check-equal (nth-value 1 (shortest-path 'c 'e g2)) '(c a e))
+(check-equal (nth-value 1 (shortest-path g2 'e 'c)) '(c a e))
 (check-equal (adjacent-edge-list g2 'd) (list (edge-between g2 'c 'd)))
 (check-equal (neighbors g2 'd) '(c))
