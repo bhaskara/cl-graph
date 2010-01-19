@@ -14,7 +14,7 @@
    :outgoing-edges :incoming-edges :head :tail
 
 
-   :compute-navfn :extract-path :shortest-path
+   :compute-navfn :extract-path :shortest-path :diameter
 
    ;; Trees
    :is-tree :parent :root :depth :add-child :children :is-root :is-leaf

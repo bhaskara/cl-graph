@@ -49,3 +49,18 @@
 	 
 (defun shortest-path (g dest src &key (cost-key :length))
   (extract-path g (nth-value 1 (compute-navfn g dest :cost-key cost-key)) src))
+
+
+
+(defun diameter (g)
+  ;; Probably better to use all-pairs-shortest-paths once
+  (reduce #'emax (node-list g) :key (partial #'radius-from g)))
+	  
+(defun radius-from (g n)
+  (let ((nav-fn (compute-navfn g n)))
+    (reduce #'emax (node-list g)
+	    :key #'(lambda (n2)
+		     (if (eql n2 n) 
+			 0
+			 (gethash n2 nav-fn 'infinity))))))
+    

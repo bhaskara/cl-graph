@@ -1,5 +1,5 @@
 (defpackage :test-graph
-  (:use :cl :cl-test :cl-graph :cl-utils))
+  (:use :cl :cl-test :cl-graph :cl-utils :extended-reals))
 
 (in-package :test-graph)
 
@@ -39,8 +39,7 @@
 (check-equal (edge-between *graph* *n2* *n1*) nil)
 
 ;; Test make-undirected graph
-(defvar g (make-undirected-graph '((foo baz) (bar) (baz bar))))
-
+(defvar g)
 
 
 ;; Shortest paths
@@ -81,6 +80,7 @@
 (mvsetq (e-path n-path) (extract-path g rt 'c))
 (check-equal e-path (list (edge-between g 'c 'd) (edge-between g 'd 'e)))
 (check-equal n-path '(c d e))
+
       
 
 
@@ -102,3 +102,23 @@
 (check-equal (nth-value 1 (shortest-path g2 'e 'c)) '(c a e))
 (check-equal (adjacent-edge-list g2 'd) (list (edge-between g2 'c 'd)))
 (check-equal (neighbors g2 'd) '(c))
+
+
+;; Diameter
+(defvar g-diam)
+(setq g-diam (make-undirected-graph
+	      '((f (b (:length . 2)))
+	       (b (a (:length . 3)))
+	       (a (c (:length . 3.2)) (e (:length . 2.4)))
+	       (c (d (:length . 4.1)))
+	       (d (e (:length . 1.6)))
+	       (e (g (:length . 1.0)))
+	       (g (h (:length . 4.4)) (i (:length . 2.1)))
+	       (h (i (:length . 1.6)) (j (:length . 3.3)))
+	       (i)
+	       (j))))
+
+(let ((*tol* .001))
+  (check-equal (diameter g-diam) 15.4 #'close-to))
+(check-equal (diameter g) 'infinity)
+  
