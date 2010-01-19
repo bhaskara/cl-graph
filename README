@@ -4,4 +4,4 @@ Features
 - Adjacency lists
 - Nodes and edges are first class, and each has an id as well as arbitrary other data stored as an alist of key-value pairs
 
-Depends on cl-utils, cl-data-structures, cl-extended-reals (git@github.com:bhaskara/*.git)
+Depends on cl-utils, cl-data-structures, cl-extended-reals git repos from git://github.com/bhaskara
