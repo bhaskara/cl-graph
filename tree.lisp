@@ -116,13 +116,14 @@ Takes O(ev^2) time"
 
 (defun up (&optional (n 1))
   (dotimes (i n)
-    (setq *current* (parent *tree* *current*))
-    (update-current-edge))
+    (setq *current* (parent *tree* *current*)))
+  (update-current-edge)
   (print-local-tree))
 
 (defun down (i)
   (assert (member i (outgoing-edges *tree* *current*)))
   (setq *current* (head *tree* i))
+  (update-current-edge)
   (print-local-tree))
 
 	  
