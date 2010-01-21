@@ -38,10 +38,12 @@ Takes O(ev^2) time"
 	       
 (defun parent (g n)
   "Return the unique parent node of N or signal an error.  Memoizes the parent edge in the node data."
+  (declare (type graph g) (id n))
   (tail g (parent-edge g n)))
 
 (defun parent-edge (g n)
   "Return the unique parent edge of N or signal an error.  Memoizes result in the node data."
+  (declare (type graph g) (id n))
   (memoize-node-data 
    g n :parent-edge
    (let ((incoming (incoming-edges g n :result-type 'list)))
@@ -53,6 +55,7 @@ Takes O(ev^2) time"
 
 
 (defun children (g n &key (result-type 'list))
+  (declare (type graph g) (id n))
   (map-iterator result-type
 		(compose #'to (partial #'edge-info g))
 		(outgoing-edges g n :result-type 'iterator)))
@@ -64,6 +67,7 @@ Takes O(ev^2) time"
 
 (defun add-child (g n &key data edge-data)
   "Returns 1) id of the new node 2) id of the edge to it"
+  (declare (type graph g) (id n))
   (let ((i (add-node g :data data)))
     (values i (add-edge g n i :data edge-data))))
 
@@ -72,18 +76,22 @@ Takes O(ev^2) time"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun is-root (g n)
+  (declare (type graph g) (id n))
   (let ((l (incoming-edges g n :result-type 'iterator)))
     (not (funcall l))))
 
 (defun is-leaf (g n)
+  (declare (type graph g) (id n))
   (let ((l (outgoing-edges g n :result-type 'iterator)))
     (not (funcall l))))
 
 (defun root (g)
+  (declare (type graph g))
   (check-not-null
    (find-if (partial #'is-root g) (node-list g))))
 
 (defun path-from-root (g n)
+  (declare (type graph g) (id n))
   (labels ((helper (g n l)
 	     (if (is-root g n)
 		 (cons n l)
@@ -91,6 +99,7 @@ Takes O(ev^2) time"
     (helper g n nil)))
 
 (defun depth (g n)
+  (declare (type graph g) (id n))
   (labels ((helper (g n d)
 	     (if (is-root g n)
 		 d

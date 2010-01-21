@@ -7,27 +7,34 @@
 ;; Basic
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(deftype id ()
+  '(or symbol fixnum))
+
 (defstruct (graph (:conc-name nil) (:constructor create-graph) (:copier nil))
-  nodes edges next-node-id next-edge-id)
+  nodes edges (next-node-id 0 :type fixnum) (next-edge-id 0 :type fixnum))
 
 (defstruct (node-info (:conc-name nil) (:constructor make-node-info (node-data adjacent-edges)) (:type list))
   node-data adjacent-edges)
 
 (defstruct (edge-info (:conc-name nil) (:constructor make-edge-info (edge-data from to)) (:type list))
-  edge-data from to)
+  edge-data 
+  (from nil :type id) 
+  (to nil :type id))
 
 (defun make-graph ()
   (create-graph :nodes (make-hash-table :test #'eql) 
-		:edges (make-hash-table :test #'eql)
-		:next-node-id 0	:next-edge-id 0))
+		:edges (make-hash-table :test #'eql)))
 
 (defun copy-graph (g)
   "Return a new graph that is a copy of G.  Edge and node data and ids are shallow copied."
   (let ((g2 (make-graph)))
     (dolist (n (node-list g))
+      (declare (type id n))
       (add-node g2 :data (copy-alist (get-node-data g n)) :id n))
     (dolist (e (edge-list g))
+      (declare (type id e))
       (dsbind (from to) (incident-nodes g e)
+	(declare (type id from to))
 	(add-edge g2 from to :id e :data (copy-alist (get-edge-data g e)))))
     g2))
   
@@ -48,23 +55,27 @@
       
 
 (defun node-info (g i)
-  (declare (type graph g))
+  (declare (type graph g) (type id i))
   (check-not-null (gethash i (nodes g)) "Node ~a unknown in ~a" i g))
 
 (defun edge-info (g i)
-  (declare (type graph g))
+  (declare (type graph g) (type id i))
   (check-not-null (gethash i (edges g)) "Edge ~a unknown in ~a" i g))
 
 (defun get-edge-data (g i)
+  (declare (type graph g) (type id i))
   (edge-data (edge-info g i)))
 
 (defun get-node-data (g i)
+  (declare (type graph g) (type id i))
   (node-data (node-info g i)))
 
 (defun lookup-edge-data (g k i)
+  (declare (type graph g) (type id i) (symbol k))
   (lookup-alist k (get-edge-data g i)))
 
 (defun lookup-node-data (g k i)
+  (declare (type graph g) (type id i) (symbol k))
   (lookup-alist k (get-node-data g i)))
 
 (defun node-list (g)
@@ -81,9 +92,11 @@
 	 (return id))))))
 
 (defun head (g e)
+  (declare (type graph g) (type id e))
   (to (edge-info g e)))
 
 (defun tail (g e)
+  (declare (type graph g) (type id e))
   (from (edge-info g e)))
      
 
@@ -92,35 +105,45 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun incident-nodes (g e)
+  (declare (type graph g) (type id e))
   (with-readers (from to) (edge-info g e)
+    (declare (type id from to)) ;; this sort of declaration is probably unnecessary since the structure slot type is declared
     (list from to)))
 
 (defun other-node (g e i)
+  (declare (type graph g) (type id e i))
   (let ((edge-info (edge-info g e)))
     (with-readers (from to) edge-info
+      (declare (type id from to))
       (cond
 	((eql from i) to)
 	((eql to i) from)
 	(t (error "Edge ~a was not incident to node ~a" edge-info i))))))
 
 (defun adjacent-edge-list (g i)
+  (declare (type graph g) (type id i))
   (adjacent-edges (node-info g i)))
 
 (defun edge-between (g i j)
   "Return (the id of) an edge between I and J if one exists, or nil otherwise."
+  (declare (type graph g) (type id i j))
   (dolist (e (adjacent-edge-list g i))
+    (declare (type id e))
     (when (eql j (other-node g e i))
       (return-from edge-between e))))
 
 (defun neighbors (g i)
   "Node ids of neighbors i in g, with duplicates removed"
+  (declare (type graph g) (type id i))  
   (let ((l nil))
     (dolist (e (adjacent-edge-list g i) l)
+      (declare (type id e))
       (pushnew (other-node g e i) l))))
 
 (defun incoming-edges (g n &key (result-type 'list))
+  (declare (type graph g) (type id n))  
   (edge-filter-helper
-   #'(lambda (e) (eql (to (edge-info g e)) n))
+   #'(lambda (e) (declare (type id e)) (eql (to (edge-info g e)) n))
    (adjacent-edge-list g n) result-type))
 
 (defun edge-filter-helper (f l result-type)
@@ -129,8 +152,9 @@
     (iterator (elements-satisfying f (iter l)))))
 
 (defun outgoing-edges (g n &key (result-type 'list))
+  (declare (type graph g) (type id n))  
   (edge-filter-helper 
-   #'(lambda (e) (eql (from (edge-info g e)) n))
+   #'(lambda (e) (declare (type id e)) (eql (from (edge-info g e)) n))
    (adjacent-edge-list g n) result-type))
    
       
@@ -141,6 +165,7 @@
 
 (defun add-node (g &key data id)
   "Add a node.  You can provide your own ID, so long as it's not an integer (those are reserved for the defaults)."
+  (declare (type graph g) (type id id))
   (orf id (1- (incf (next-node-id g))))
   (with-readers (nodes) g
     (assert (not (hash-table-has-key nodes id)))
@@ -150,6 +175,7 @@
 
 (defun add-edge (g from to &key id data)
   "Add an edge between two nodes.  You can provide your own ID, so long as its not an integer (those are reserved for the defaults)."
+  (declare (type graph g) (type id id from to))
   (orf id (1- (incf (next-edge-id g))))
   (with-readers (edges) g
     (assert (not (hash-table-has-key edges id)))
@@ -161,12 +187,15 @@
       id)))
 
 (defun remove-edge (g id)
+  (declare (type graph g) (id id))
   (dolist (n (incident-nodes g id))
+    (declare (type id n))
     (let ((info (node-info g n)))
       (setf (adjacent-edges info) (delete id (adjacent-edges info)))))
   (assert (remhash id (edges g)) nil "Attempted to delete nonexistent edge ~a" id))
 
 (defun update-node-data (g n k v)
+  (declare (type id n) (symbol k))
   (let ((i (node-info g n)))
     (aif (assoc k (node-data i))
 	 (setf (cdr it) v)
@@ -174,6 +203,7 @@
     v))
 
 (defun update-edge-data (g e k v)
+  (declare (type id e) (symbol k) (graph g))
   (let ((i (edge-info g e)))
     (aif (assoc k (edge-data i))
 	 (setf (cdr it) v)

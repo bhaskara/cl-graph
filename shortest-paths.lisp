@@ -50,6 +50,10 @@
 (defun shortest-path (g dest src &key (cost-key :length))
   (extract-path g (nth-value 1 (compute-navfn g dest :cost-key cost-key)) src))
 
+(defun shortest-path-distance (g src dest &key (cost-key :length))
+  "Return the shortest path distance between src and dest, or infinity if there's no path"
+  (gethash src (compute-navfn g dest :cost-key cost-key) 'infinity))
+
 
 
 (defun diameter (g)

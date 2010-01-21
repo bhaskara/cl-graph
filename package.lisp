@@ -2,7 +2,7 @@
   (:use :cl-utils :extended-reals :pqueue :cl)
   (:export
 
-   :make-graph :make-undirected-graph :copy-graph 
+   :make-graph :make-undirected-graph :copy-graph :id
    :node-list :edge-list
 
    :add-node :add-edge :remove-edge
@@ -14,7 +14,7 @@
    :outgoing-edges :incoming-edges :head :tail
 
 
-   :compute-navfn :extract-path :shortest-path :diameter
+   :compute-navfn :extract-path :shortest-path :diameter :shortest-path-distance
 
    ;; Trees
    :is-tree :parent :root :depth :add-child :children :is-root :is-leaf
