@@ -2,7 +2,7 @@
   (:use :cl-utils :extended-reals :pqueue :cl)
   (:export
 
-   :make-graph :make-undirected-graph :copy-graph :id
+   :make-graph :make-undirected-graph :copy-graph :id :graph
    :node-list :edge-list
 
    :add-node :add-edge :remove-edge
