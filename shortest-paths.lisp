@@ -48,6 +48,7 @@
 	     
 	 
 (defun shortest-path (g dest src &key (cost-key :length))
+  "Return shortest path from src to dest, represented as 1) a list of edge ids 2) a list of node ids"
   (extract-path g (nth-value 1 (compute-navfn g dest :cost-key cost-key)) src))
 
 (defun shortest-path-distance (g src dest &key (cost-key :length))

@@ -39,9 +39,19 @@
     g2))
   
 
+
+(defun convert-adj-specs-to-list (adj-specs)
+  (etypecase adj-specs
+    (list adj-specs)
+    (hash-table 
+       (let ((l nil))
+	 (do-hash-entries ((v edge-specs) adj-specs l)
+	   (push (cons v edge-specs) l))))))
+
 (defun make-undirected-graph (adj-specs)
-  "adj-specs is list of elements of form (V E1 ... En) where V are node names Ei is either a node name or a pair (NODE-NAME . EDGE-DATA)"
-  (let ((g (make-graph)))
+  "adj-specs is list of elements of form (V E1 ... En) where V are node names Ei is either a node name or a pair (NODE-NAME . EDGE-DATA).  Adj-specs can also be hash table from V to (E1 ... En) using the above notation."
+  (let ((g (make-graph))
+	(adj-specs (convert-adj-specs-to-list adj-specs)))
     (dolist (spec adj-specs)
       (add-node g :id (first spec)))
     (dolist (spec adj-specs g)
