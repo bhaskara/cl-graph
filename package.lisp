@@ -5,7 +5,7 @@
    :make-graph :make-undirected-graph :copy-graph :id :graph
    :node-list :edge-list
 
-   :add-node :add-edge :remove-edge
+   :add-node :add-edge :remove-edge :remove-node
 
    :get-edge-data :get-node-data :lookup-edge-data :lookup-node-data 
    :update-edge-data :update-node-data :memoize-edge-data :memoize-node-data

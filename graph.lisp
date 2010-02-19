@@ -174,20 +174,32 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun add-node (g &key data id)
-  "Add a node.  You can provide your own ID, so long as it's not an integer (those are reserved for the defaults)."
+  "Add a node.  You can provide your own ID, so long as it's not an integer (those are reserved for the defaults).  Returns the added node's id."
   (declare (type graph g) (type id id))
-  (orf id (1- (incf (next-node-id g))))
   (with-readers (nodes) g
+    
+    ;; Either use the provided id or the next free id
+    (symbol-macrolet ((next (next-node-id g)))
+      (while (hash-table-has-key nodes next)
+	(incf next))
+      (orf id next))
+
     (assert (not (hash-table-has-key nodes id)))
     (setf (gethash id nodes) (make-node-info data nil))
     id))
 
 
 (defun add-edge (g from to &key id data)
-  "Add an edge between two nodes.  You can provide your own ID, so long as its not an integer (those are reserved for the defaults)."
+  "Add an edge between two nodes.  You can provide your own ID, so long as its not an integer (those are reserved for the defaults).  Returns the added edge's id."
   (declare (type graph g) (type id id from to))
-  (orf id (1- (incf (next-edge-id g))))
   (with-readers (edges) g
+
+    ;; Either use the provided id or the next free one
+    (symbol-macrolet ((next (next-edge-id g)))
+      (while (hash-table-has-key edges next)
+	(incf next))
+      (orf id next))
+
     (assert (not (hash-table-has-key edges id)))
     (let ((from-node (node-info g from))
 	  (to-node (node-info g to)))
@@ -197,12 +209,26 @@
       id)))
 
 (defun remove-edge (g id)
-  (declare (type graph g) (id id))
+  (declare (type graph g) (type id id))
   (dolist (n (incident-nodes g id))
     (declare (type id n))
     (let ((info (node-info g n)))
       (setf (adjacent-edges info) (delete id (adjacent-edges info)))))
   (assert (remhash id (edges g)) nil "Attempted to delete nonexistent edge ~a" id))
+
+(defun remove-node (g id &key remove-edges)
+  "Remove node labelled ID.  Node must have no outgoing edges unless remove-edges is true, in which case they're removed first."
+  (declare (type graph g) (type id id))
+  (let ((edges (adjacent-edge-list g id)))
+    (if remove-edges
+	(dolist (e edges)
+	  (remove-edge g e))
+	(assert (null edges) nil "Attempted to delete node ~a with edges ~a where remove-edges was not set." id edges))
+    
+    ;; This assert should never happen as it should be caught above
+    (assert (remhash id (nodes g)))))
+      
+  
 
 (defun update-node-data (g n k v)
   (declare (type id n) (symbol k))

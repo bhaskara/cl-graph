@@ -122,3 +122,43 @@
   (check-equal (diameter g-diam) 15.4 #'close-to))
 (check-equal (diameter g) 'infinity)
   
+
+;; Remove nodes
+(defvars g3 n1 n2 n3 n4 n5 e12 e13 e14 e23 e25)
+(setq g3 (make-graph)
+      n1 (add-node g3)
+      n2 (add-node g3)
+      n3 (add-node g3)
+      n4 (add-node g3)
+      e12 (add-edge g3 n1 n2)
+      e13 (add-edge g3 n3 n1)
+      e14 (add-edge g3 n1 n4)
+      e23 (add-edge g3 n2 n3))
+
+;; Pre-removal
+(check-equal (adjacent-edge-list g3 n2) (list e12 e23) #'is-permutation)
+(check-equal (adjacent-edge-list g3 n1) (list e12 e13 e14) #'is-permutation)
+(check-equal (adjacent-edge-list g3 n3) (list e13 e23) #'is-permutation)
+(check-equal (neighbors g3 n2) (list n1 n3) #'is-permutation)
+
+(check-error (remove-node g3 n3))
+(check-equal (adjacent-edge-list g3 n2) (list e12 e23) #'is-permutation)
+(check-equal (adjacent-edge-list g3 n1) (list e12 e13 e14) #'is-permutation)
+(check-equal (adjacent-edge-list g3 n3) (list e13 e23) #'is-permutation)
+(check-equal (neighbors g3 n2) (list n1 n3) #'is-permutation)
+
+(remove-node g3 n3 :remove-edges t)
+(check-equal (adjacent-edge-list g3 n2) (list e12) #'is-permutation)
+(check-equal (adjacent-edge-list g3 n1) (list e12 e14) #'is-permutation)
+(check-error (adjacent-edge-list g3 n3))
+(check-equal (neighbors g3 n2) (list n1) #'is-permutation)
+
+(setq n5 (add-node g3)
+      e25 (add-edge g3 n2 n5))
+(check-equal (adjacent-edge-list g3 n2) (list e12 e25) #'is-permutation)
+(check-equal (adjacent-edge-list g3 n1) (list e12 e14) #'is-permutation)
+(check-error (adjacent-edge-list g3 n3))
+(check-equal (adjacent-edge-list g3 n5) (list e25))
+(check-equal (neighbors g3 n2) (list n5 n1) #'is-permutation)
+
+
